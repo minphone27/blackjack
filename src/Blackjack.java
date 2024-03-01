@@ -1,38 +1,27 @@
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
-
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.awt.*;
-import java.util.ArrayList;
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
 
-/*#####################################
- * Blackjack Game 1.0
- * 17 September 2015
- * (c) Joseph Rautenbach
- * This is a one-player blackjack game
- * where the player plays against the
- * dealer. Said player sets an initial
- * balance, deals and then hits or
- * stands until either getting a black-
- * jack, winning, losing or pushing.
- * When out of money the option to
- * top up or end the game is given.
- #####################################*/
 
 public class Blackjack {
 
-	private static JFrame frame = new MainFrame(); // Creating an instance of the MainFrame class.
+	private static JFrame frame = new MainFrame();
+	private static CardGroup deck, dealerCards, playerCards;
+	private static CardGroupPanel dealerCardPanel = null, playerCardPanel = null;
+	private static Card dealerHiddenCard;
+	private static double balance = 0.0;
+	private static int betAmount = 0, roundCount = 0;
+	private static JButton btnSwapCards;
+	private static JComboBox<String> playerCardComboBox;
+	private static JComboBox<String> dealerCardComboBox;
 
-	private static CardGroup deck, dealerCards, playerCards; //Declaring Variables: 
-	private static CardGroupPanel dealerCardPanel = null, playerCardPanel = null; // The deck of cards, the dealer's cards, the player's cards, the panels for the player's and dealer's cards
-	private static Card dealerHiddenCard; //  and the hidden card of the dealer.
-
-	private static double balance = 0.0; // Setting the initial amounts for the Balance,
-	private static int betAmount = 0, roundCount = 0; // the amount the player bets and the number of rounds.
-
-	// Creating the GUI elements in the window builder
 	private static JTextField tfBalance;
 	private static JLabel lblInitialBalance;
 	private static JButton btnNewGame;
@@ -52,65 +41,82 @@ public class Blackjack {
 	private static JButton btnContinue;
 	private static JLabel lblShuffleInfo = null;
 
-	public static boolean isValidAmount(String s) { // This is to assure that the values entered for the initial balance and the player's bet are natural numbers.
+
+	public static void playSound(String file) {
 		try {
-			if (Integer.parseInt(s) > 0) // Ensure amount entered is > 0
+			// Load the sound file
+			AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(file));
+
+			// Get a clip resource
+			Clip clip = AudioSystem.getClip();
+
+			// Open audio clip and load samples from the audio input stream
+			clip.open(audioInputStream);
+
+			// Start playing the clip
+			clip.start();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static boolean isValidAmount(String s) {
+		try {
+			if (Integer.parseInt(s) > 0)
 				return true;
 			else
 				return false;
-		} catch (NumberFormatException e) { // If not valid integer
+		} catch (NumberFormatException e) {
 			return false;
 		}
 	}
 
-	// This function runs when the program starts or when the game ends. It displays the initial GUI objects to enter an initial balance and start/stop a game
 	public static void initGuiObjects() {
-		btnNewGame = new JButton("New Game"); // New game button
+		btnNewGame = new JButton("New Game");
 		btnNewGame.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				newGame(); // Start game
+				newGame();
 			}
 		});
 		btnNewGame.setBounds(20, 610, 99, 50);
 		frame.getContentPane().add(btnNewGame);
 
-		btnEndGame = new JButton("End Game"); // End game button, this removes all GUI objects and starts from scratch
+		btnEndGame = new JButton("End Game");
 		btnEndGame.setEnabled(false);
 		btnEndGame.setBounds(121, 610, 99, 50);
 		btnEndGame.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				frame.getContentPane().removeAll(); // Remove all objects from screen
-				frame.repaint(); // Repaint to show update
-				initGuiObjects(); // Restart the game logic and display the New Game menu
+				frame.getContentPane().removeAll();
+				frame.repaint();
+				initGuiObjects();
 			}
 		});
 		frame.getContentPane().add(btnEndGame);
 
-		tfBalance = new JTextField(); // Text field to store initial balance
+		tfBalance = new JTextField();
 		tfBalance.setText("100");
 		tfBalance.setBounds(131, 580, 89, 28);
 		frame.getContentPane().add(tfBalance);
 		tfBalance.setColumns(10);
 
-		lblInitialBalance = new JLabel("Initial Balance:"); // Initial balance label
+		lblInitialBalance = new JLabel("Initial Balance:");
 		lblInitialBalance.setFont(new Font("Arial", Font.BOLD, 13));
 		lblInitialBalance.setForeground(Color.WHITE);
 		lblInitialBalance.setBounds(30, 586, 100, 16);
 		frame.getContentPane().add(lblInitialBalance);
 	}
 
-	public static void showBetGui() { // This runs when a new game is started. It initializes and displays the current balance label, deal amount and deal button
-
+	public static void showBetGui() {
 		btnEndGame.setEnabled(true);
 
-		lblCurrentBalance = new JLabel("Current Balance:"); // Current balance label
+		lblCurrentBalance = new JLabel("Current Balance:");
 		lblCurrentBalance.setHorizontalAlignment(SwingConstants.CENTER);
 		lblCurrentBalance.setFont(new Font("Arial", Font.BOLD, 16));
 		lblCurrentBalance.setForeground(Color.WHITE);
 		lblCurrentBalance.setBounds(315, 578, 272, 22);
 		frame.getContentPane().add(lblCurrentBalance);
 
-		lblBalanceAmount = new JLabel(); // Balance label, shows current balance
+		lblBalanceAmount = new JLabel();
 		lblBalanceAmount.setText(String.format("$%.2f", balance));
 		lblBalanceAmount.setForeground(Color.ORANGE);
 		lblBalanceAmount.setFont(new Font("Arial", Font.BOLD, 40));
@@ -118,7 +124,7 @@ public class Blackjack {
 		lblBalanceAmount.setBounds(315, 600, 272, 50);
 		frame.getContentPane().add(lblBalanceAmount);
 
-		lblInfo = new JLabel("Please enter a bet and click Deal"); // Deal info label
+		lblInfo = new JLabel("Please enter a bet and click Deal");
 		lblInfo.setBackground(Color.ORANGE);
 		lblInfo.setOpaque(false);
 		lblInfo.setForeground(Color.ORANGE);
@@ -127,105 +133,121 @@ public class Blackjack {
 		lblInfo.setBounds(290, 482, 320, 28);
 		frame.getContentPane().add(lblInfo);
 
-		tfBetAmount = new JTextField(); // Bet amount text field
+		tfBetAmount = new JTextField();
 		tfBetAmount.setText("10");
 		tfBetAmount.setBounds(790, 580, 89, 28);
 		frame.getContentPane().add(tfBetAmount);
 
-		lblEnterBet = new JLabel("Enter Bet:"); // Bet amount info label
+		lblEnterBet = new JLabel("Enter Bet:");
 		lblEnterBet.setFont(new Font("Arial", Font.BOLD, 14));
 		lblEnterBet.setForeground(Color.WHITE);
 		lblEnterBet.setBounds(689, 586, 100, 16);
 		frame.getContentPane().add(lblEnterBet);
 
-		btnDeal = new JButton("Deal"); // Deal button
+		btnDeal = new JButton("Deal");
 		btnDeal.setBounds(679, 610, 200, 50);
 		btnDeal.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				deal(); // When clicked, deal
+				deal();
 			}
 		});
 		frame.getContentPane().add(btnDeal);
 		btnDeal.requestFocus();
 
-		frame.repaint();
-
+		// Add UI elements for card swapping
+//		playerCardComboBox = new JComboBox<>(new String[]{"Card 1", "Card 2"});
+//		playerCardComboBox.setBounds(290, 555, 140, 25);
+//		frame.getContentPane().add(playerCardComboBox);
+//
+//		dealerCardComboBox = new JComboBox<>(new String[]{"Card 1", "Card 2"});
+//		dealerCardComboBox.setBounds(470, 555, 140, 25);
+//		frame.getContentPane().add(dealerCardComboBox);
+//
+//		btnSwapCards = new JButton("Swap Cards");
+//		btnSwapCards.setBounds(679, 555, 200, 30);
+//		btnSwapCards.addActionListener(new ActionListener() {
+//			public void actionPerformed(ActionEvent e) {
+//				swapCards();
+//			}
+//		});
+//		frame.getContentPane().add(btnSwapCards);
+//
+//		frame.repaint();
 	}
 
-	public static void deal() { // Runs when the Deal button is pressed. Draws two player and dealer cards (only displaying one of the dealer's cards) and asks for an action from the player, or if there's an immediate outcome (eg. blackjack straight away), it takes action
-
-		if (lblShuffleInfo != null) // (Every 5 rounds the deck is reshuffled and this label is displayed. Hide it when a new round is started
+	public static void deal() {
+		if (lblShuffleInfo != null)
 			frame.getContentPane().remove(lblShuffleInfo);
 
-		// Initialise dealer/player card arrays
 		dealerCards = new CardGroup();
 		playerCards = new CardGroup();
 
-		if (isValidAmount(tfBetAmount.getText()) == true) { // Parse bet amount given
+		if (isValidAmount(tfBetAmount.getText())) {
+			playSound("coins-handling.wav");
 			betAmount = Integer.parseInt(tfBetAmount.getText());
 		} else {
-			lblInfo.setText("Error: Bet must be a natural number!"); // Give an error
+			lblInfo.setText("Error: Bet must be a natural number!");
 			tfBetAmount.requestFocus();
 			return;
 		}
 
-		if (betAmount > balance) { // If bet is higher than balance
-			lblInfo.setText("Error: Bet higher than balance!"); // Give an error
+		if (betAmount > balance) {
+			lblInfo.setText("Error: Bet higher than balance!");
 			tfBetAmount.requestFocus();
 			return;
 		}
-		balance -= betAmount; // Subtract bet from balance
+		balance -= betAmount;
 
 		lblBalanceAmount.setText(String.format("$%.2f", balance));
 
 		tfBetAmount.setEnabled(false);
 		btnDeal.setEnabled(false);
 
-		lblInfo.setText("Please Hit or Stand"); // Next instruction
+		lblInfo.setText("Please Hit or Stand");
 
-		lblDealer = new JLabel("Dealer"); // Dealer label
+		lblDealer = new JLabel("Dealer");
 		lblDealer.setForeground(Color.WHITE);
 		lblDealer.setFont(new Font("Arial Black", Font.BOLD, 20));
 		lblDealer.setBounds(415, 158, 82, 28);
 		frame.getContentPane().add(lblDealer);
 
-		lblPlayer = new JLabel("Player"); // Player label
+		lblPlayer = new JLabel("Player");
 		lblPlayer.setForeground(Color.WHITE);
 		lblPlayer.setFont(new Font("Arial Black", Font.BOLD, 20));
 		lblPlayer.setBounds(415, 266, 82, 28);
 		frame.getContentPane().add(lblPlayer);
 
-		btnHit = new JButton("Hit"); // Hit button
+		btnHit = new JButton("Hit");
 		btnHit.setBounds(290, 515, 140, 35);
 		btnHit.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				hit(); // When pressed, hit
+				hit();
 			}
 		});
 		frame.getContentPane().add(btnHit);
 		btnHit.requestFocus();
 
-		btnStand = new JButton("Stand"); // Stand button
+		btnStand = new JButton("Stand");
 		btnStand.setBounds(470, 515, 140, 35);
 		btnStand.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				stand(); // When pressed, stand
+				stand();
 			}
 		});
 		frame.getContentPane().add(btnStand);
 
-		btnContinue = new JButton("Continue"); // When the final outcome is reached, press this to accept and continue the game
+		btnContinue = new JButton("Continue");
 		btnContinue.setEnabled(false);
 		btnContinue.setVisible(false);
 		btnContinue.setBounds(290, 444, 320, 35);
 		btnContinue.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				acceptOutcome(); // Accept outcome
+				acceptOutcome();
 			}
 		});
 		frame.getContentPane().add(btnContinue);
 
-		lblBetAmount = new JLabel(); // Show bet amount
+		lblBetAmount = new JLabel();
 		lblBetAmount.setText("$" + betAmount);
 		lblBetAmount.setHorizontalAlignment(SwingConstants.CENTER);
 		lblBetAmount.setForeground(Color.ORANGE);
@@ -233,121 +255,117 @@ public class Blackjack {
 		lblBetAmount.setBounds(679, 488, 200, 50);
 		frame.getContentPane().add(lblBetAmount);
 
-		lblBetAmountDesc = new JLabel("Bet Amount:"); // Bet amount info label
+		lblBetAmountDesc = new JLabel("Bet Amount:");
 		lblBetAmountDesc.setHorizontalAlignment(SwingConstants.CENTER);
 		lblBetAmountDesc.setForeground(Color.WHITE);
 		lblBetAmountDesc.setFont(new Font("Arial", Font.BOLD, 16));
 		lblBetAmountDesc.setBounds(689, 465, 190, 22);
 		frame.getContentPane().add(lblBetAmountDesc);
 
-		frame.repaint(); // Redraw frame to show changes
+		frame.repaint();
 
-		dealerHiddenCard = deck.takeCard(); // Take a card from top of deck for dealer but hide it
-		dealerCards.cards.add(new Card("", "", 0)); // Add turned over card to dealer's cards
-		dealerCards.cards.add(deck.takeCard()); // Add card from top of deck to dealer's cards
+		dealerHiddenCard = deck.takeCard();
+		dealerCards.cards.add(new Card("", "", 0));
+		dealerCards.cards.add(deck.takeCard());
 
-		// Add two cards from top of deck to player's cards
 		playerCards.cards.add(deck.takeCard());
 		playerCards.cards.add(deck.takeCard());
 
-		updateCardPanels(); // Display the two card panels
-
-		simpleOutcomes(); // Check for any automatic outcomes (i.e. immediate blackjack)
-
+		updateCardPanels();
+		simpleOutcomes();
 	}
 
-	public static void hit() { // Add another card to player cards, show the new card and check for any outcomes
-
+	private static void hit() {
 		playerCards.cards.add(deck.takeCard());
 		updateCardPanels();
-
 		simpleOutcomes();
-
 	}
 
-	public static boolean simpleOutcomes() { // This runs automatically whenever deal is pressed or the player hits
+	private static boolean simpleOutcomes() {
 		boolean outcomeHasHappened = false;
-		int playerScore = playerCards.getTotalValue(); // Get player score as total of cards he has
-		if (playerScore > 21 && playerCards.getNumAces() > 0) // If player has at least one ace and would otherwise lose (>21), subtract 10
+		int playerScore = playerCards.getTotalValue();
+		if (playerScore > 21 && playerCards.getNumAces() > 0)
 			playerScore -= 10;
 
-		if (playerScore == 21) { // Potential player blackjack
-
-			dealerCards.cards.set(0, dealerHiddenCard); // Replace hidden dealer's card with actual card
-			updateCardPanels(); // Display new card
-			if (dealerCards.getTotalValue() == 21) { // If dealer ALSO gets a blackjack
-				lblInfo.setText("Push!"); // Push
-				balance += betAmount; // Give bet back to player
+		if (playerScore == 21) {
+			dealerCards.cards.set(0, dealerHiddenCard);
+			updateCardPanels();
+			if (dealerCards.getTotalValue() == 21) {
+				lblInfo.setText("Push!");
+				balance += betAmount;
 			} else {
-				// Player gets a blackjack only
 				lblInfo.setText(String.format("Player gets Blackjack! Profit: $%.2f", 1.5f * betAmount));
-				balance += 2.5f * betAmount; // Add profits to balance
-			}
-			lblBalanceAmount.setText(String.format("$%.2f", balance)); // Show new balance
+				playSound("light-applause.wav");
 
+				balance += 2.5f * betAmount;
+			}
+			lblBalanceAmount.setText(String.format("$%.2f", balance));
 			outcomeHasHappened = true;
-			outcomeHappened(); // If something's happened, this round is over. Show the results of round and Continue button
-		} else if (playerScore > 21) { // If player goes bust
+			outcomeHappened();
+		} else if (playerScore > 21) {
 			lblInfo.setText("Player goes Bust! Loss: $" + betAmount);
-			dealerCards.cards.set(0, dealerHiddenCard); // Replace hidden dealer's card with actual card
+			playSound("lose.wav");
+			dealerCards.cards.set(0, dealerHiddenCard);
 			updateCardPanels();
 			outcomeHasHappened = true;
-			outcomeHappened(); // If something's happened, this round is over. Show the results of round and Continue button
+			outcomeHappened();
 		}
 		return outcomeHasHappened;
-
 	}
 
-	public static void stand() { // When stand button is pressed
-		if (simpleOutcomes()) // Check for any normal outcomes. If so, we don't need to do anything here so return.
+	private static void stand() {
+		if (simpleOutcomes())
 			return;
 
-		int playerScore = playerCards.getTotalValue(); // Get player score as total of cards he has
-		if (playerScore > 21 && playerCards.getNumAces() > 0) // If player has at least one ace and would otherwise lose (>21), subtract 10
+		int playerScore = playerCards.getTotalValue();
+		if (playerScore > 21 && playerCards.getNumAces() > 0)
 			playerScore -= 10;
 
-		dealerCards.cards.set(0, dealerHiddenCard); // Replace hidden dealer's card with actual card
+		dealerCards.cards.set(0, dealerHiddenCard);
 
-		int dealerScore = dealerCards.getTotalValue(); // Get dealer score as total of cards he has
+		int dealerScore = dealerCards.getTotalValue();
 
-		while (dealerScore < 16) { // If dealer's hand is < 16, he needs to get more cards until it's > 16
-			dealerCards.cards.add(deck.takeCard()); // Take a card from top of deck and add
+		while (dealerScore < 16) {
+			dealerCards.cards.add(deck.takeCard());
 			dealerScore = dealerCards.getTotalValue();
-			if (dealerScore > 21 && dealerCards.getNumAces() > 0) // If there's an ace and total > 21, subtract 10
+			if (dealerScore > 21 && dealerCards.getNumAces() > 0)
 				dealerScore -= 10;
 		}
-		updateCardPanels(); // Display new dealer's cards
+		updateCardPanels();
 
-		// Determine final outcomes, give profits if so and display outcomes
-		if (playerScore > dealerScore) { // Player wins
+		if (playerScore > dealerScore) {
 			lblInfo.setText("Player wins! Profit: $" + betAmount);
+//			playSound("cha-ching.wav");
+
 			balance += betAmount * 2;
 			lblBalanceAmount.setText(String.format("$%.2f", balance));
-		} else if (dealerScore == 21) { // Dealer blackjack
+		} else if (dealerScore == 21) {
 			lblInfo.setText("Dealer gets Blackjack! Loss: $" + betAmount);
-		} else if (dealerScore > 21) { // Dealer bust
+//			playSound("light-applause.wav");
+
+		} else if (dealerScore > 21) {
 			lblInfo.setText("Dealer goes Bust! Profit: $" + betAmount);
+//			playSound("lose.wav");
 			balance += betAmount * 2;
 			lblBalanceAmount.setText(String.format("$%.2f", balance));
-		} else if (playerScore == dealerScore) { // Push
+		} else if (playerScore == dealerScore) {
 			lblInfo.setText("Push!");
 			balance += betAmount;
 			lblBalanceAmount.setText(String.format("$%.2f", balance));
-		} else { // Otherwise - dealer wins
+		} else {
 			lblInfo.setText("Dealer Wins! Loss: $" + betAmount);
-		}
-		outcomeHappened(); // If something's happened, this round is over. Show the results of round and Continue button
+			playSound("cha-ching.wav");
 
+		}
+		outcomeHappened();
 	}
 
-	public static void outcomeHappened() { //If something's happened, this round is over. Show the results of round and Continue button
-
+	private static void outcomeHappened() {
 		btnHit.setEnabled(false);
 		btnStand.setEnabled(false);
-
-		// Fancy effects, highlight info label orange and delay the display of Continue button by 500ms
 		lblInfo.setOpaque(true);
 		lblInfo.setForeground(Color.RED);
+		// Replace the existing Timer instantiation
 		new Timer().schedule(new TimerTask() {
 			@Override
 			public void run() {
@@ -359,13 +377,9 @@ public class Blackjack {
 
 	}
 
-	public static void acceptOutcome() { // When outcome is reached
-
+	private static void acceptOutcome() {
 		lblInfo.setOpaque(false);
 		lblInfo.setForeground(Color.ORANGE);
-		
-		// Remove deal objects
-
 		frame.getContentPane().remove(lblDealer);
 		frame.getContentPane().remove(lblPlayer);
 		frame.getContentPane().remove(btnHit);
@@ -381,8 +395,10 @@ public class Blackjack {
 		btnDeal.requestFocus();
 		frame.repaint();
 
-		if (balance <= 0) { // If out of funds, either top up or end game
-			int choice = JOptionPane.showOptionDialog(null, "You have run out of funds. Press Yes to add $100, or No to end the current game.", "Out of funds", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
+		if (balance <= 0) {
+			int choice = JOptionPane.showOptionDialog(null,
+					"You have run out of funds. Press Yes to add $100, or No to end the current game.",
+					"Out of funds", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, null, null);
 
 			if (choice == JOptionPane.YES_OPTION) {
 				balance += 100;
@@ -395,15 +411,13 @@ public class Blackjack {
 			}
 		}
 
-		roundCount++; // If 5 rounds, reinitialise the deck and reshuffle to prevent running out of cards
+		roundCount++;
 		if (roundCount >= 5) {
 			deck.initFullDeck();
 			deck.shuffle();
 
 			lblShuffleInfo = new JLabel("Deck has been replenished and reshuffled!");
-			//lblShuffleInfo.setBackground(new Color(0, 128, 0));
 			lblShuffleInfo.setForeground(Color.ORANGE);
-			//lblShuffleInfo.setOpaque(true);
 			lblShuffleInfo.setFont(new Font("Arial", Font.BOLD, 20));
 			lblShuffleInfo.setHorizontalAlignment(SwingConstants.CENTER);
 			lblShuffleInfo.setBounds(235, 307, 430, 42);
@@ -413,57 +427,98 @@ public class Blackjack {
 		}
 	}
 
-	public static void newGame() { // When new game is started
+	private static void newGame() {
+		Object[] options = {"Challenge Mode", "Normal Mode"};
+		int choice = JOptionPane.showOptionDialog(frame,
+				"Choose your desire mode",
+				"Swap Cards Option",
+				JOptionPane.YES_NO_OPTION,
+				JOptionPane.QUESTION_MESSAGE,
+				null,
+				options,
+				options[0]);
 
-		if (isValidAmount(tfBalance.getText()) == true) { // Check that balance is valid
+		boolean showSwapCardsButton = (choice == JOptionPane.YES_OPTION);
+
+		if (isValidAmount(tfBalance.getText())) {
 			balance = Integer.parseInt(tfBalance.getText());
 		} else {
-			JOptionPane.showMessageDialog(frame, "Invalid balance! Please ensure it is a natural number.", "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(frame, "Invalid balance! Please ensure it is a natural number.",
+					"Error", JOptionPane.ERROR_MESSAGE);
 			tfBalance.requestFocus();
 			return;
 		}
 
 		btnNewGame.setEnabled(false);
 		tfBalance.setEnabled(false);
-		
-		showBetGui(); // Show bet controls
+
+		showBetGui();
 
 		roundCount = 0;
 
-		deck = new CardGroup(); // Initialize dealer deck
-		deck.initFullDeck(); // Add all the cards (default 52 card)
-		deck.shuffle(); // Shuffle
+		deck = new CardGroup();
+		deck.initFullDeck();
+		deck.shuffle();
 
+		System.out.println(showSwapCardsButton);
+
+		if (showSwapCardsButton) {
+			// Add UI elements for card swapping
+			playerCardComboBox = new JComboBox<>(new String[]{"Card 1", "Card 2"});
+			playerCardComboBox.setBounds(290, 555, 140, 25);
+			frame.getContentPane().add(playerCardComboBox);
+
+			dealerCardComboBox = new JComboBox<>(new String[]{"Card 1", "Card 2"});
+			dealerCardComboBox.setBounds(470, 555, 140, 25);
+			frame.getContentPane().add(dealerCardComboBox);
+
+			btnSwapCards = new JButton("Swap Cards");
+			btnSwapCards.setBounds(679, 555, 200, 30);
+			btnSwapCards.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					swapCards();
+				}
+			});
+			frame.getContentPane().add(btnSwapCards);
+
+			frame.repaint();
+		}
 	}
 
-	public static void updateCardPanels() { // Displays dealer and player cards as images
-		if (dealerCardPanel != null) { // If they're already added, remove them
+
+	private static void updateCardPanels() {
+		if (dealerCardPanel != null) {
 			frame.getContentPane().remove(dealerCardPanel);
 			frame.getContentPane().remove(playerCardPanel);
 		}
-		// Create and display two panels
+
 		dealerCardPanel = new CardGroupPanel(dealerCards, 420 - (dealerCards.getCount() * 40), 50, 70, 104, 10);
 		frame.getContentPane().add(dealerCardPanel);
 		playerCardPanel = new CardGroupPanel(playerCards, 420 - (playerCards.getCount() * 40), 300, 70, 104, 10);
 		frame.getContentPane().add(playerCardPanel);
+
 		frame.repaint();
 	}
 
-	public static void main(String[] args) throws ClassNotFoundException, InstantiationException, IllegalAccessException, UnsupportedLookAndFeelException {
+	private static void swapCards() {
+		int selectedPlayerCardIndex = playerCardComboBox.getSelectedIndex();
+		int selectedDealerCardIndex = dealerCardComboBox.getSelectedIndex();
 
-		// Start of program
-		
-		//UIManager.setLookAndFeel("com.sun.java.swing.plaf.motif.MotifLookAndFeel");
-		
-		
-		
-		initGuiObjects(); // Displays the initial GUI objects to enter an initial balance and start/stop a game
+		if (selectedPlayerCardIndex >= 0 && selectedPlayerCardIndex < playerCards.getCount() &&
+				selectedDealerCardIndex >= 0 && selectedDealerCardIndex < dealerCards.getCount()) {
+			Card tempPlayerCard = playerCards.cards.get(selectedPlayerCardIndex);
+			Card tempDealerCard = dealerCards.cards.get(selectedDealerCardIndex);
 
-		frame.setVisible(true);
+			playerCards.cards.set(selectedPlayerCardIndex, tempDealerCard);
+			dealerCards.cards.set(selectedDealerCardIndex, tempPlayerCard);
 
+			updateCardPanels();
+		}
 	}
 
-	public static int heightFromWidth(int width) { // 500x726 original size, helper function to get height proportional to width
-		return (int) (1f * width * (380f / 255f));
+	public static void main(String[] args) {
+		initGuiObjects();
+		frame.setVisible(true);
 	}
 }
+
