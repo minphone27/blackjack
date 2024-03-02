@@ -25,13 +25,17 @@ class CardGroupPanel extends JPanel {
 		if (total > 21 && cardGroup.getNumAces() > 0)
 			total -= 10;
 
-		JLabel playerScoreLbl = new JLabel((total == 21 ? "BJ" : total) + "");
-		playerScoreLbl.setForeground(Color.WHITE);
-		playerScoreLbl.setFont(new Font("Lucida Grande", Font.BOLD, 20));
-		playerScoreLbl.setVerticalAlignment(SwingConstants.CENTER);
-		playerScoreLbl.setHorizontalAlignment(SwingConstants.RIGHT);
-		playerScoreLbl.setBounds(0, 0, 30, height);
-		add(playerScoreLbl);
+		if(!Blackjack.challenge){
+			JLabel playerScoreLbl = new JLabel((total == 21 ? "BJ" : total) + "");
+			playerScoreLbl.setForeground(Color.WHITE);
+			playerScoreLbl.setFont(new Font("Lucida Grande", Font.BOLD, 20));
+			playerScoreLbl.setVerticalAlignment(SwingConstants.CENTER);
+			playerScoreLbl.setHorizontalAlignment(SwingConstants.RIGHT);
+			playerScoreLbl.setBounds(0, 0, 30, height);
+			add(playerScoreLbl);
+		}
+
+
 
 		for (int i = 0; i < numCards; i++) {
 			ImagePanel cardImagePanel = new ImagePanel(cardGroup.cards.get(i).getFileName());

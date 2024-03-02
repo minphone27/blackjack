@@ -41,6 +41,8 @@ public class Blackjack {
 	private static JButton btnContinue;
 	private static JLabel lblShuffleInfo = null;
 
+	static boolean challenge;
+
 
 	public static void playSound(String file) {
 		try {
@@ -335,17 +337,17 @@ public class Blackjack {
 
 		if (playerScore > dealerScore) {
 			lblInfo.setText("Player wins! Profit: $" + betAmount);
-//			playSound("cha-ching.wav");
+			playSound("cha-ching.wav");
 
 			balance += betAmount * 2;
 			lblBalanceAmount.setText(String.format("$%.2f", balance));
 		} else if (dealerScore == 21) {
 			lblInfo.setText("Dealer gets Blackjack! Loss: $" + betAmount);
-//			playSound("light-applause.wav");
+			playSound("light-applause.wav");
 
 		} else if (dealerScore > 21) {
 			lblInfo.setText("Dealer goes Bust! Profit: $" + betAmount);
-//			playSound("lose.wav");
+			playSound("lose.wav");
 			balance += betAmount * 2;
 			lblBalanceAmount.setText(String.format("$%.2f", balance));
 		} else if (playerScore == dealerScore) {
@@ -427,6 +429,11 @@ public class Blackjack {
 		}
 	}
 
+	public static void setMode(boolean mode) {
+		challenge = mode;
+	}
+
+
 	private static void newGame() {
 		Object[] options = {"Challenge Mode", "Normal Mode"};
 		int choice = JOptionPane.showOptionDialog(frame,
@@ -438,7 +445,11 @@ public class Blackjack {
 				options,
 				options[0]);
 
-		boolean showSwapCardsButton = (choice == JOptionPane.YES_OPTION);
+		 boolean showSwapCardsButton = (choice == JOptionPane.YES_OPTION);
+
+		 setMode(showSwapCardsButton);
+
+		System.out.println(challenge);
 
 		if (isValidAmount(tfBalance.getText())) {
 			balance = Integer.parseInt(tfBalance.getText());
@@ -460,7 +471,7 @@ public class Blackjack {
 		deck.initFullDeck();
 		deck.shuffle();
 
-		System.out.println(showSwapCardsButton);
+//		System.out.println(showSwapCardsButton);
 
 		if (showSwapCardsButton) {
 			// Add UI elements for card swapping
