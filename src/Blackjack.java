@@ -479,9 +479,9 @@ public class Blackjack {
 			playerCardComboBox.setBounds(290, 555, 140, 25);
 			frame.getContentPane().add(playerCardComboBox);
 
-			dealerCardComboBox = new JComboBox<>(new String[]{"Card 1", "Card 2"});
-			dealerCardComboBox.setBounds(470, 555, 140, 25);
-			frame.getContentPane().add(dealerCardComboBox);
+//			dealerCardComboBox = new JComboBox<>(new String[]{"Card 1", "Card 2"});
+//			dealerCardComboBox.setBounds(470, 555, 140, 25);
+//			frame.getContentPane().add(dealerCardComboBox);
 
 			btnSwapCards = new JButton("Swap Cards");
 			btnSwapCards.setBounds(679, 555, 200, 30);
@@ -513,7 +513,7 @@ public class Blackjack {
 
 	private static void swapCards() {
 		int selectedPlayerCardIndex = playerCardComboBox.getSelectedIndex();
-		int selectedDealerCardIndex = dealerCardComboBox.getSelectedIndex();
+		int selectedDealerCardIndex = 1;
 
 		if (selectedPlayerCardIndex >= 0 && selectedPlayerCardIndex < playerCards.getCount() &&
 				selectedDealerCardIndex >= 0 && selectedDealerCardIndex < dealerCards.getCount()) {
