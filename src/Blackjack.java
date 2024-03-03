@@ -43,6 +43,7 @@ public class Blackjack {
 
 	static boolean challenge;
 
+	static boolean disable;
 
 	public static void playSound(String file) {
 		try {
@@ -156,28 +157,10 @@ public class Blackjack {
 		frame.getContentPane().add(btnDeal);
 		btnDeal.requestFocus();
 
-		// Add UI elements for card swapping
-//		playerCardComboBox = new JComboBox<>(new String[]{"Card 1", "Card 2"});
-//		playerCardComboBox.setBounds(290, 555, 140, 25);
-//		frame.getContentPane().add(playerCardComboBox);
-//
-//		dealerCardComboBox = new JComboBox<>(new String[]{"Card 1", "Card 2"});
-//		dealerCardComboBox.setBounds(470, 555, 140, 25);
-//		frame.getContentPane().add(dealerCardComboBox);
-//
-//		btnSwapCards = new JButton("Swap Cards");
-//		btnSwapCards.setBounds(679, 555, 200, 30);
-//		btnSwapCards.addActionListener(new ActionListener() {
-//			public void actionPerformed(ActionEvent e) {
-//				swapCards();
-//			}
-//		});
-//		frame.getContentPane().add(btnSwapCards);
-//
-//		frame.repaint();
 	}
 
 	public static void deal() {
+		btnSwapCards.setEnabled(true);
 		if (lblShuffleInfo != null)
 			frame.getContentPane().remove(lblShuffleInfo);
 
@@ -294,9 +277,12 @@ public class Blackjack {
 			updateCardPanels();
 			if (dealerCards.getTotalValue() == 21) {
 				lblInfo.setText("Push!");
+				btnSwapCards.setEnabled(false);
 				balance += betAmount;
 			} else {
 				lblInfo.setText(String.format("Player gets Blackjack! Profit: $%.2f", 1.5f * betAmount));
+				btnSwapCards.setEnabled(false);
+
 				playSound("light-applause.wav");
 
 				balance += 2.5f * betAmount;
@@ -306,6 +292,7 @@ public class Blackjack {
 			outcomeHappened();
 		} else if (playerScore > 21) {
 			lblInfo.setText("Player goes Bust! Loss: $" + betAmount);
+			btnSwapCards.setEnabled(false);
 			playSound("lose.wav");
 			dealerCards.cards.set(0, dealerHiddenCard);
 			updateCardPanels();
@@ -337,25 +324,31 @@ public class Blackjack {
 
 		if (playerScore > dealerScore) {
 			lblInfo.setText("Player wins! Profit: $" + betAmount);
+			btnSwapCards.setEnabled(false);
 			playSound("cha-ching.wav");
 
 			balance += betAmount * 2;
 			lblBalanceAmount.setText(String.format("$%.2f", balance));
 		} else if (dealerScore == 21) {
 			lblInfo.setText("Dealer gets Blackjack! Loss: $" + betAmount);
+			btnSwapCards.setEnabled(false);
 			playSound("light-applause.wav");
 
 		} else if (dealerScore > 21) {
 			lblInfo.setText("Dealer goes Bust! Profit: $" + betAmount);
+			btnSwapCards.setEnabled(false);
 			playSound("lose.wav");
 			balance += betAmount * 2;
 			lblBalanceAmount.setText(String.format("$%.2f", balance));
 		} else if (playerScore == dealerScore) {
 			lblInfo.setText("Push!");
+			btnSwapCards.setEnabled(false);
+			playSound("draw.wav");
 			balance += betAmount;
 			lblBalanceAmount.setText(String.format("$%.2f", balance));
 		} else {
 			lblInfo.setText("Dealer Wins! Loss: $" + betAmount);
+			btnSwapCards.setEnabled(false);
 			playSound("cha-ching.wav");
 
 		}
@@ -433,6 +426,10 @@ public class Blackjack {
 		challenge = mode;
 	}
 
+	public static void setDisable(boolean mode) {
+		disable = mode;
+	}
+
 
 	private static void newGame() {
 		Object[] options = {"Challenge Mode", "Normal Mode"};
@@ -491,6 +488,10 @@ public class Blackjack {
 				}
 			});
 			frame.getContentPane().add(btnSwapCards);
+
+			if (disable){
+				btnSwapCards.setEnabled(false);
+			}
 
 			frame.repaint();
 		}
